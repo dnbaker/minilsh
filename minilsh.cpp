@@ -244,9 +244,40 @@ void init_hashers(py::module &m) {
         SMW_HASH_DEC(LpLSHasher, float);
 }
 
+#if 0
+template<typename VT, typename IT, typename IPtrT, typename FT=float>
+py::object csr_msr_2proj(
+    const CSparseMatrix<VT, IT, IPtrT> &mat,
+    dist::DissimilarityMeasure msr,
+    int k, int l_nhashes=k * 2, int k_nprojperhash=1, int maxdistperp=k * 3, double p=0.)
+{
+    py::object ret;
+    if(l_nhashes < 0 || k_nprojperhash < 0 || maxdistperp < 0) throw std::invalid_argument("nhashes, nprojperhash, or maxdistperp are < 0.");
+    // Step 1: compute projections
+    if(msr == distance::L1 || msr == distance::L2 || msr == distance::SQRL2 || p > 0.) {
+        // Project
+    } else if(msr == distance::JSD || msr == distance::S2JSD || msr == distance::UWLLR ||
+       msr == distance::LLR || msr == distance::MKL || msr == distance::REVERSE_MKL ||
+       msr == distance::ITAKURA_SAITO || msr == distance::REVERSE_ITAKURA_SAITO ||
+       msr == distance::HELLINGER || msr == distance::BHATTACHARYYA_DISTANCE || msr == distance::TVD ||
+       msr == distance::SRLRT || msr == distance::SRULRT || msr == distance::POISSON)
+    {
+        blz::DV<double> rsis = 1. / blaze::generate(mat.rows(), [&mat](auto x) {return sum(row(mat, x));});
+        py::array arr(py::dtype("f"), std::vector<py::ssize_t>{{py::ssize_t(mat.rows()), py::ssize_t(mat.columns())}});
+        ret = arr;
+       // Compute row sums, then use normalized JSD LSH (for everything but S2JSD)
+    }
+    return ret;
+}
+    // Step 2: Take projections, then aggregate into subkeys and build index
+    //         Choice: use LSH table or DCI
+    // Step 3: Use the oracle to generate potential nearest neighbors
+    // Step 4: create the list of nearest neighbors
+#endif
+
 #undef SETTINGS_GETTER
 #undef SMW_HASH_DEC
 PYBIND11_MODULE(minilsh, m) {
     init_hashers(m);
-    m.doc() = "Python bindings for FGC, which allows for calling coreset/clustering code from numpy and converting results back to numpy arrays";
+    m.doc() = "Python bindings for LSH functions";
 }
