@@ -12,7 +12,6 @@ import multiprocessing.pool
 minicoredir = environ.get("MINICORE_DIR", None)
 if not minicoredir:
     raise RuntimeError("Required: set MINICORE_DIR for installation")
-'''
 sleefdir = environ.get("SLEEF_DIR", "../sleef/build")
 SLEEFLIB = sleefdir + "/lib/libsleef.a"
 
@@ -22,7 +21,6 @@ if not path.isfile(SLEEFLIB):
     check_call(f"cd {sleefdir} && cmake .. -DBUILD_SHARED_LIBS=0 && make", shell=True)
 else:
     print("SLEEFLIB " + SLEEFLIB + " found as expected", file=sys.stderr)
-'''
 
 # from https://stackoverflow.com/questions/11013851/speeding-up-build-process-with-distutils
 # parallelizes extension compilation
@@ -76,6 +74,10 @@ extra_compile_args = ['-march=native', '-DNDEBUG',
 
 if 'BOOST_DIR' in environ:
     extra_compile_args.append("-I%s" % environ['BOOST_DIR'])
+
+if 'SLEEF_DIR' in environ:
+    extra_compile_args.append("-I%s/include" % environ['SLEEF_DIR'])
+    extra_compile_args.append("-L%s/lib" % environ['SLEEF_DIR'])
 
 
 include_dirs=[
