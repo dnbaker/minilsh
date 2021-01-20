@@ -15,29 +15,62 @@ auto project_array(const Hasher<FT> &hasher, const PyCSparseMatrix &smw, bool ro
         )
     );
     auto rvinf = rv.request();
-    const bool iptr_is_32 = std::tolower(smw.indptr_t_[0]) == 'i';
-    const bool idx_is_32 = std::tolower(smw.indices_t_[0]) == 'i';
+    const char smwt = std::tolower(smw.indptr_t_[0]), smwi = std::tolower(smw.indices_t_[0]);
     for(size_t i = 0; i < smw.rows(); ++i) {
         ssize_t start, stop;
-        if(iptr_is_32) {
+        if(smwt == 'i') {
             start = ((uint32_t *)smw.indptrp_)[i];
             stop = ((uint32_t *)smw.indptrp_)[i + 1];
-        } else {
+        } else if(smwt == 'b') {
+            start = ((uint8_t *)smw.indptrp_)[i];
+            stop = ((uint8_t *)smw.indptrp_)[i + 1];
+        } else if(smwt == 'h') {
+            start = ((uint16_t *)smw.indptrp_)[i];
+            stop = ((uint16_t *)smw.indptrp_)[i + 1];
+        } else if(smwt == 'l') {
             start = ((uint64_t *)smw.indptrp_)[i];
             stop = ((uint64_t *)smw.indptrp_)[i + 1];
-        }
+        } else throw std::invalid_argument("Wrong datatype for indptr");
         FT *retp = (FT *)rvinf.ptr + (i * nh);
         auto nnz = stop - start;
         switch(smw.data_t_[0]) {
+            case 'B':
+                if(smwi == 'i') hasher.project((uint8_t *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'l') hasher.project((uint8_t *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'h') hasher.project((uint8_t *)smw.datap_ + start, (uint16_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'b') hasher.project((uint8_t *)smw.datap_ + start, (uint8_t *)smw.indicesp_ + start, nnz, retp);
+                else throw std::invalid_argument("Wrong datatype for indices");
+                break;
+            case 'H':
+                if(smwi == 'i') hasher.project((uint16_t *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'l') hasher.project((uint16_t *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'h') hasher.project((uint16_t *)smw.datap_ + start, (uint16_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'b') hasher.project((uint16_t *)smw.datap_ + start, (uint8_t *)smw.indicesp_ + start, nnz, retp);
+                else throw std::invalid_argument("Wrong datatype for indices");
+                break;
+            case 'i': case 'I':
+                if(smwi == 'i') hasher.project((uint32_t *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'l') hasher.project((uint32_t *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'h') hasher.project((uint32_t *)smw.datap_ + start, (uint16_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'b') hasher.project((uint32_t *)smw.datap_ + start, (uint8_t *)smw.indicesp_ + start, nnz, retp);
+                else throw std::invalid_argument("Wrong datatype for indices");
+                break;
             case 'd':
-                if(idx_is_32) hasher.project((double *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
-                else          hasher.project((double *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
-            break;
+                if(smwi == 'i') hasher.project((double *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'l') hasher.project((double *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'h') hasher.project((double *)smw.datap_ + start, (uint16_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'b') hasher.project((double *)smw.datap_ + start, (uint8_t *)smw.indicesp_ + start, nnz, retp);
+                else throw std::invalid_argument("Wrong datatype for indices");
+                break;
             case 'f':
-                if(idx_is_32) hasher.project((float *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
-                else          hasher.project((float *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
-            break;
-        }
+                if(smwi == 'i') hasher.project((float *)smw.datap_ + start, (uint32_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'l') hasher.project((float *)smw.datap_ + start, (uint64_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'h') hasher.project((float *)smw.datap_ + start, (uint16_t *)smw.indicesp_ + start, nnz, retp);
+                else if(smwi == 'b') hasher.project((float *)smw.datap_ + start, (uint8_t *)smw.indicesp_ + start, nnz, retp);
+                else throw std::invalid_argument("Wrong datatype for indices");
+                break;
+            default: throw std::invalid_argument("Wrong datatype for indices");
+            }
         if(round) {
             auto view = blz::make_cv((FT *)rvinf.ptr, nr * nh);
             view = floor(view);
