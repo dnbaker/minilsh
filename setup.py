@@ -12,10 +12,11 @@ import multiprocessing.pool
 minicoredir = environ.get("MINICORE_DIR", None)
 if not minicoredir:
     raise RuntimeError("Required: set MINICORE_DIR for installation")
-sleefdir = environ.get("SLEEF_DIR", "../sleef/build")
+sleefdir = environ.get("SLEEF_DIR", "../minicore/sleef")
 SLEEFLIB = sleefdir + "/lib/libsleef.a"
 
 if not path.isfile(SLEEFLIB):
+    sleefdir = sleefdir + "/build"
     if not path.isdir(sleefdir):
         makedirs(sleefdir)
     check_call(f"cd {sleefdir} && cmake .. -DBUILD_SHARED_LIBS=0 && make", shell=True)
