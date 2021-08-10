@@ -88,7 +88,7 @@ auto project_array(const Hasher<FT> &hasher, const py::array obj, bool round=fal
     py::object ret = py::none();
     FT *ptr = (FT *)bi.ptr;
     const ssize_t nh = hasher.nh();
-    if(bi.itemsize != sizeof(FT)) throw std::invalid_argument("Sanity check: itemsize and type size are different");
+    if(bi.itemsize != sizeof(FT)) throw std::invalid_argument("Sanity check: itemsize and type size are different; You're using a " + std::is_same_v<FT, float> ? "float": std::is_same_v<FT, double> ? "double": "unknown" + "hasher but hashing items of a different size. JSDLSHasher hashes floats, but JSDLSHasher_d hashes doubles. You must select the same precision.");
     if((std::is_same_v<FT, double> && bi.format.front() != 'd') || (std::is_same_v<FT, float> && bi.format.front() != 'f'))
         throw std::invalid_argument(std::string("Type of array ") + bi.format + " does not match hasher with items of size " + std::to_string(bi.itemsize));
     if(nd == 1) {
